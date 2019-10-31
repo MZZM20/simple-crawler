@@ -41,7 +41,10 @@ def Get_content(site,page):
 
     f.write(chapter + '\n\n')  # 写入章节标题
     for word in words:
-        f.write("    " + word +'\n\n')     #写入章节内容，这里我喜欢两句之间空一行，可以自行更换
+        try:
+            f.write("    " + word +'\n\n')     #写入章节内容，这里我喜欢两句之间空一行，可以自行更换
+        except :
+            pass
     f.write('\n\n')
     f.close()   #关闭文件
 
