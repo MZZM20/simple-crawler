@@ -15,7 +15,7 @@ def Get_content(site,page):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}  #获得响应头
     url = site + page
-    response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, verify=False)   #将verify设置为false,会有warning,但是可以避免可能出现的SSLConnectionError
     response.encoding = "gbk"   #此编码格式与你所要爬取的网站的网页源码格式有关，一般是"gbk"（即"gbk2312")、"utf-8"
     
     chapter = None
