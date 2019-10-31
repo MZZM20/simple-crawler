@@ -61,4 +61,4 @@ if __name__ == '__main__':     #主函数开始
         page = Get_content(site,page)  #每次写入一页后，更新下一页
         print(time.asctime(time.localtime()),"the first %d page"%(tem_page))  #显示目前状态
         tem_page += 1
-#       time.sleep(0.1)        #延迟响应0.1秒防止浏览过快被封ip
+ #       time.sleep(0.1)        #延迟响应0.1秒防止浏览过快被封ip
