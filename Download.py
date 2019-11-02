@@ -15,7 +15,7 @@ import threading
 
 Stop_flag = False
 download = 0
-Words =[]
+Responses =[]
 Code = 'gbk'
     
 class Thread_Download(threading.Thread):
@@ -25,15 +25,15 @@ class Thread_Download(threading.Thread):
         self.Website = website
         
     def run(self):
-        global Code,download,Stop_flag,Words
+        global Code,download,Stop_flag,Responses
         src = re.findall(r'^(.*)/(.*)\.html',self.Website)
         site = src[0][0] +'/'
         page = src[0][1] + '.html'
         headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}  #获得响应头
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'}  #获得响应头
         response = requests.get(self.Website, headers=headers)
         response.encoding = Code
-        if not re.findall('gbk',response.text):
+        if not re.search('gbk',response.text,re.I):
             Code = 'utf-8'
         
         while not Stop_flag:
@@ -46,16 +46,7 @@ class Thread_Download(threading.Thread):
                 else:
                     break
             response.encoding = Code
-            try:
-                chapter=re.search(r'<h1.*>(?P<content>.*)</h1>',response.text,re.I).groupdict()['content']    #抓取章节标题
-                words = []
-                words.append(chapter)
-                words.extend(re.findall(r'&nbsp;&nbsp;&nbsp;&nbsp;(?P<content>.*?)[<\n]',response.text))   #抓取章节内容
-            except :
-                print("maybe this book is over .")        #可能是爬完了，也可能是出错了，总之，此时须退出
-                Stop_flag = True
-                return
-            Words.append(words)
+            Responses.append(response)
             download += 1
             print("第 %d 页------------------------------已经爬取完成。"%(download))
             try:
@@ -76,24 +67,33 @@ class Thread_Extract(threading.Thread):
         self.Path = Path
         
     def run(self):
-        global Code,download,Stop_flag,Words
+        global Code,download,Stop_flag,Responses
         while not download and Stop_flag==False :
-            pass
+            time.sleep(0.8)
         
         f = open(self.Path, 'a+', encoding=Code)
         
         Extract = 0
-        while not Stop_flag or Words:
-            if not Words and not Stop_flag:
+        while not Stop_flag or Responses:
+            if not Responses and not Stop_flag:
                 time.sleep(0.5)
                 continue
-            for word in Words[0]:
+
+            response = Responses[0]
+            try:
+                chapter=re.search(r'<h1.*>(?P<content>.*)</h1>',response.text,re.I).groupdict()['content']    #抓取章节标题
+                words = []
+                words.append(chapter)
+                words.extend(re.findall(r'&nbsp;&nbsp;&nbsp;&nbsp;(?P<content>.*?)[<\n]',response.text))   #抓取章节内容
+            except :
+                pass
+            for word in words:
                 try:
                     f.write('    ' + word +'\n\n')     #写入每页内容，这里我喜欢两句之间空一行，可以自行更换
                 except :
                     pass
             f.write('\n\n')
-            del Words[0]
+            del Responses[0]
             Extract += 1
             print("第 %d 页******************************已经写入完成。"%(Extract))
         
