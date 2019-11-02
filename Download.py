@@ -123,5 +123,5 @@ if __name__ == '__main__':     #主函数开始
     t2.join()
     cost = time.time() - start
     size = os.path.getsize(Path)/1000
-    print('This book has been crawled,whose size is %.2f KB .It takes %.1f seconds.Your download speed is %.2f KB/s .'%(size,cost,size/cost))
+    print('This book has been crawled.Its size is %.2f KB .It takes %.1f seconds.Your download speed is %.2f KB/s .'%(size,cost,size/cost))
 
