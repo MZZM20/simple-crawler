@@ -38,7 +38,13 @@ class Thread_Download(threading.Thread):
         
         while not Stop_flag:
             print(self.Website)
-            response = requests.get(self.Website, headers=headers)
+            while True:
+                try:
+                    response = requests.get(self.Website, headers=headers)
+                except:
+                    time.sleep(2.5)     #访问过快，有些网站会禁止你的IP的访问，所以停上个2.5秒重新再访问
+                else:
+                    break
             response.encoding = Code
             try:
                 chapter=re.search(r'<h1.*>(?P<content>.*)</h1>',response.text,re.I).groupdict()['content']    #抓取章节标题
