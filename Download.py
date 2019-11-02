@@ -28,37 +28,45 @@ class Thread_Download(threading.Thread):
         global Code,download,Stop_flag,Responses
         src = re.findall(r'^(.*)/(.*)\.html',self.Website)
         site = src[0][0] +'/'
-        page = src[0][1] + '.html'
+        page = src[0][1] 
         headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'}  #获得响应头
         response = requests.get(self.Website, headers=headers)
         response.encoding = Code
-        if not re.search('gbk',response.text,re.I):
+        if not re.search('gb[k2]',response.text,re.I):
             Code = 'utf-8'
-        
+        oldresponse = None
         while not Stop_flag:
             print(self.Website)
             while True:
                 try:
-                    response = requests.get(self.Website, headers=headers)
+                    response = requests.get(self.Website, headers=headers, timeout = 2)
                 except:
-                    time.sleep(2.5)     #访问过快，有些网站会禁止你的IP的访问，所以停上个2.5秒重新再访问
+                    try:
+                        page = re.search(r'href(.*/|=")(?P<content>.*?)\.html".*?下一(页|章)',oldresponse.text,re.I).groupdict()['content']   #抓取下一页信息
+                    except :
+                        print("this book is over !")
+                        Stop_flag = True
+                        return     
+                    if len(page) > 10 :
+                        print("抱歉，目前暂不支持对该网站的解码，无法自动翻页。")
+                        Stop_flag = True
+                        return
+                    self.Website = site + page + '.html'
                 else:
                     break
             response.encoding = Code
             Responses.append(response)
             download += 1
+            oldresponse = response
             print("第 %d 页------------------------------已经爬取完成。"%(download))
             try:
-                page = re.search(r'(章节列表|章节目录|目录).*?<[/a-z;&> ]*?href([^\n下]*/|=")(?P<content>.*?)">下',response.text,re.I|re.S).groupdict()['content']   #抓取下一页信息
-            except :
-                print("this book is over !")
-                Stop_flag = True
-                return
-            if site + page == self.Website:
-                Stop_flag = True
+                page = int(page)
+            except:
+                page = re.search(r'href(.*/|=")(?P<content>.*?)\.html".*?下一(页|章)',response.text,re.I).groupdict()['content']
             else:
-                self.Website = site + page
+                page = str(page + 1)
+            self.Website = site + page + '.html'
         
 class Thread_Extract(threading.Thread):
     
@@ -122,6 +130,6 @@ if __name__ == '__main__':     #主函数开始
     
     t2.join()
     cost = time.time() - start
-    size = os.path.getsize(Path)/1024
+    size = os.path.getsize(Path)/1000
     print('This book has been crawled.Its size is %.2f KB .It takes %.1f seconds.Your download speed is %.2f KB/s .'%(size,cost,size/cost))
 
