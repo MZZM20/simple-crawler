@@ -12,6 +12,7 @@ import time
 import sys
 import threading
 
+
 Stop_flag = False
 download = 0
 Words =[]
@@ -30,13 +31,14 @@ class Thread_Download(threading.Thread):
         page = src[0][1] + '.html'
         headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'}  #获得响应头
-        response = requests.get(self.Website, headers=headers, verify=False)
+        response = requests.get(self.Website, headers=headers)
         response.encoding = Code
         if not re.findall('gbk',response.text):
             Code = 'utf-8'
         
         while not Stop_flag:
-            response = requests.get(self.Website, headers=headers, verify=False)
+            print(self.Website)
+            response = requests.get(self.Website, headers=headers)
             response.encoding = Code
             try:
                 chapter=re.search(r'<h1.*>(?P<content>.*)</h1>',response.text,re.I).groupdict()['content']    #抓取章节标题
@@ -51,7 +53,7 @@ class Thread_Download(threading.Thread):
             download += 1
             print("第 %d 页------------------------------已经爬取完成。"%(download))
             try:
-                page = re.search(r'(章节列表|章节目录|目录|章节).*?<a.*?href(.*/|=")(?P<content>.*?)">下',response.text,re.I|re.S).groupdict()['content']   #抓取下一页信息
+                page = re.search(r'(章节列表|章节目录|目录).*?<[/a-z;&> ]*?href([^\n下]*/|=")(?P<content>.*?)">下',response.text,re.I|re.S).groupdict()['content']   #抓取下一页信息
             except :
                 print("this book is over !")
                 Stop_flag = True
@@ -99,7 +101,7 @@ if __name__ == '__main__':     #主函数开始
         Path = sys.argv[2]
     else:
         print('未给出参数（书籍第一页的网址、书籍在本地保存的地址),程序退出。')
-        sys._exit(0)
+        sys.exit(0)
     
     src = re.findall(r'^(.*)\\(.*)\.txt',Path)
     if src and not os.path.exists(src[0][0]):
