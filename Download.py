@@ -43,7 +43,7 @@ class Thread_Download(threading.Thread):
                     response = requests.get(self.Website, headers=headers, timeout = 2)
                 except:
                     try:
-                        page = re.search(r'href(.*/|=")(?P<content>.*?)\.html".*?下一(页|章)',oldresponse.text,re.I).groupdict()['content']   #抓取下一页信息
+                        page = re.search(r'href(.*/|=")(?P<content>.*?)\.html".*?下一(页|章|回)',oldresponse.text,re.I).groupdict()['content']   #抓取下一页信息
                     except :
                         print("this book is over !")
                         Stop_flag = True
@@ -63,7 +63,7 @@ class Thread_Download(threading.Thread):
             try:
                 page = int(page)
             except:
-                page = re.search(r'href(.*/|=")(?P<content>.*?)\.html".*?下一(页|章)',response.text,re.I).groupdict()['content']
+                page = re.search(r'href(.*/|=")(?P<content>.*?)\.html".*?下一(页|章|回)',response.text,re.I).groupdict()['content']
             else:
                 page = str(page + 1)
             self.Website = site + page + '.html'
