@@ -89,15 +89,15 @@ class Thread_Extract(threading.Thread):
 
             response = Responses[0]
             try:
-                chapter=re.search(r'<h1.*>(?P<content>.*)</h1>',response.text,re.I).groupdict()['content']    #抓取章节标题
+                chapter=re.search(r'<h1.*?>(?P<content>.*)</h1>',response.text,re.I).groupdict()['content']    #抓取章节标题
                 words = []
-                words.append(chapter)
-                words.extend(re.findall(r'&nbsp;&nbsp;&nbsp;&nbsp;(?P<content>.*?)[<\n]',response.text))   #抓取章节内容
+                words.append((None,chapter))
+                words.extend(re.findall(r'(&nbsp;)+(.*?)[<\n]',response.text))   #抓取章节内容
             except :
                 pass
             for word in words:
                 try:
-                    f.write('    ' + word +'\n\n')     #写入每页内容，这里我喜欢两句之间空一行，可以自行更换
+                    f.write('    ' + word[1] +'\n')     #写入每页内容
                 except :
                     pass
             f.write('\n\n')
