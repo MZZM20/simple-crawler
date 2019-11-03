@@ -36,25 +36,28 @@ class Thread_Download(threading.Thread):
         if not re.search('gb[k2]',response.text,re.I):
             Code = 'utf-8'
         oldresponse = None
+        MaxReConnection = 15
+        PageTurningMode = False
         while not Stop_flag:
             print(self.Website)
-            while True:
+            while MaxReConnection:
                 try:
+                    MaxReConnection -= 1
                     response = requests.get(self.Website, headers=headers, timeout = 2)
-                except:
-                    try:
-                        page = re.search(r'href(.*/|=")(?P<content>.*?)\.html".*?下一(页|章|回)',oldresponse.text,re.I).groupdict()['content']   #抓取下一页信息
-                    except :
-                        print("this book is over !")
-                        Stop_flag = True
-                        return     
-                    if len(page) > 10 :
-                        print("抱歉，目前暂不支持对该网站的解码，无法自动翻页。")
+                    if response.status_code == 404 and not PageTurningMode:
+                        page = Intelligentpageturning(oldresponse)
+                        PageTurningMode = True
+                        self.Website = site + page + '.html'
+                        continue
+                    if response.status_code == 404 and PageTurningMode:
                         Stop_flag = True
                         return
-                    self.Website = site + page + '.html'
+                except:
+                    time.sleep(2.5)
                 else:
+                    MaxReConnection = 15
                     break
+                
             response.encoding = Code
             Responses.append(response)
             download += 1
@@ -63,10 +66,16 @@ class Thread_Download(threading.Thread):
             try:
                 page = int(page)
             except:
-                page = re.search(r'href(.*/|=")(?P<content>.*?)\.html".*?下一(页|章|回)',response.text,re.I).groupdict()['content']
+                page = Intelligentpageturning(response)
+                PageTurningMode = True
             else:
                 page = str(page + 1)
-            self.Website = site + page + '.html'
+                PageTurningMode = False
+            if site + page + '.html' == self.Website:
+                print("书籍已爬取完毕。")
+                Stop_flag = True
+            else:
+                self.Website = site + page + '.html'
         
 class Thread_Extract(threading.Thread):
     
@@ -92,7 +101,7 @@ class Thread_Extract(threading.Thread):
                 chapter=re.search(r'<h1.*?>(?P<content>.*)</h1>',response.text,re.I).groupdict()['content']    #抓取章节标题
                 words = []
                 words.append((None,chapter))
-                words.extend(re.findall(r'(&nbsp;)+(.*?)[<\n]',response.text))   #抓取章节内容
+                words.extend(re.findall(r'(&nbsp;|<br />)+(.*?)(<br />|&amp;)',response.text,re.S))   #抓取章节内容
             except :
                 pass
             for word in words:
@@ -106,6 +115,18 @@ class Thread_Extract(threading.Thread):
             print("第 %d 页******************************已经写入完成。"%(Extract))
         
         f.close()   #关闭文件
+
+
+def Intelligentpageturning(response):
+    global Stop_flag
+    try:
+        page = re.search(r'href(.*/|=")(?P<content>.*?)\.html".*?下一(页|章|回)',response.text,re.I).groupdict()['content']   #抓取下一页信息
+    except :
+        print("检索到当前页面无下一页链接，书籍可能已经爬取完毕。")
+        Stop_flag = True
+        return None
+    return page
+
 
 
 if __name__ == '__main__':     #主函数开始
