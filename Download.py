@@ -31,7 +31,12 @@ class Thread_Download(threading.Thread):
         page = src[0][1] 
         headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'}  #获得响应头
-        response = requests.get(self.Website, headers=headers)
+        try:
+            response = requests.get(self.Website, headers=headers)
+        except:
+            Stop_flag = True
+            print('连接服务器失败。请检查网络是否连接或所给网站可否访问。')
+            return
         response.encoding = Code
         if not re.search('gb[k2]',response.text,re.I):
             Code = 'utf-8'
@@ -53,10 +58,14 @@ class Thread_Download(threading.Thread):
                         Stop_flag = True
                         return
                 except:
-                    time.sleep(2.5)
+                    if Stop_flag :
+                        return
+                    print('连接超时。正在尝试重连……')
                 else:
                     MaxReConnection = 15
                     break
+            else:
+                print('该网站可能屏蔽掉本机IP，请下次从中断处继续下载。')
                 
             response.encoding = Code
             Responses.append(response)
@@ -86,14 +95,14 @@ class Thread_Extract(threading.Thread):
     def run(self):
         global Code,download,Stop_flag,Responses
         while not download and Stop_flag==False :
-            time.sleep(0.8)
+            time.sleep(0.25)
         
         f = open(self.Path, 'a+', encoding=Code)
         
         Extract = 0
         while not Stop_flag or Responses:
-            if not Responses and not Stop_flag:
-                time.sleep(0.5)
+            if not Responses:
+                time.sleep(0.1)
                 continue
 
             response = Responses[0]
@@ -151,6 +160,6 @@ if __name__ == '__main__':     #主函数开始
     
     t2.join()
     cost = time.time() - start
-    size = os.path.getsize(Path)/1000
+    size = os.path.getsize(Path)/1024
     print('This book has been crawled.Its size is %.2f KB .It takes %.1f seconds.Your download speed is %.2f KB/s .'%(size,cost,size/cost))
 
