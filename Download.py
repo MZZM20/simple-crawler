@@ -27,8 +27,13 @@ class Thread_Download(threading.Thread):
     def run(self):
         global Code,download,Stop_flag,Responses
         src = re.findall(r'^(.*)/(.*)\.html',self.Website)
-        site = src[0][0] +'/'
-        page = src[0][1] 
+        try:    
+            site = src[0][0] +'/'
+            page = src[0][1] 
+        except:
+            print('所给书籍网址格式错误。')
+            Stop_flag = True
+            return
         headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'}  #获得响应头
         try:
@@ -147,10 +152,10 @@ if __name__ == '__main__':     #主函数开始
         print('未给出参数（书籍第一页的网址、书籍在本地保存的地址),程序退出。')
         sys.exit(0)
     
-    src = re.findall(r'^(.*)\\(.*)\.txt',Path)
-    if src and not os.path.exists(src[0][0]):
-        os.makedirs(src[0][0])
-    
+    src = re.findall(r'^(.*)\.txt',Path)
+    if not src:
+        print('所给书籍保存地址格式错误。')
+        sys.exit(0)
     t1 = Thread_Download(website)
     t2 = Thread_Extract(Path)
     
